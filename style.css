@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700family=Crimson+Text&display=swap');
+
+:root {
+    --bg: #0b0714;
+    --panel: #161026;
+    --border: #4b2e83;
+    --glow: #a66bff;
+    --text: #e6dcff;
+    --muted: #9b8bc4;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+    background: radial-gradient(circle at top, #1d1038 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 1.2rem;
+}
+
+.game {
+    width: 100%;
+    max-width: 640px;
+}
+
+h1 {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 2.6rem;
+    letter-spacing: 6px;
+    color: var(--glow);
+    text-shadow: 0 0 12px var(--glow), 0 0 30px #6a2fd8;
+    margin: 10px 0 24px;
+}
+
+h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin: 0 0 10px;
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 18px rgba(166, 107, 255, 0.15);
+}
+
+#story-text {
+    margin: 0;
+    line-height: 1.6;
+    min-height: 80px;
+}
+
+.choices {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+button {
+    flex: 1;
+    min-width: 140px;
+    padding: 14px 18px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--glow);
+    border-radius: 8px;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+button:hover {
+    background: var(--glow);
+    color: var(--bg);
+    box-shadow: 0 0 20px var(--glow);
+    transform: translateY(-2px);
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(75, 46, 131, 0.4);
+}
+
+li:last-child {
+    border-bottom: none;
+}

@@ -47,17 +47,62 @@ const scenes = {
         ]
     },
     cloak: {
-        text: "The cloak settles on your shoulder and the shadows bend toward you. The stranger vanishes into mist. The bridge is clear, and the forest feels like it knows you now. To be continued...",
+        text: "The cloak settles on your shoulder and the shadows bend toward you. The stranger vanishes into mist. Far across the bridge, a pale castle glows. The path to it is open.",
         choices: [
-            { label: "Begin again", next: "start" }
+            { label: "Cross the bridge to the castle", next: "castle" },
+            { label: "Go back", next: "start" }
         ]
     },
     cave: {
-        text: "The river leads to a cave mouth shaped like a screaming face. Cold air breathes out of it. To be continued...",
+        text: "The river leads to a cave mouth shaped like a screaming face. Inside, a stone door is carved with a silver keyhole. Cold air breathes through the cracks.",
         choices: [
+            { label: "Unlock the door with the Silver Key", next: "vault", requires: "Silver Key" },
+            { label: "Pry at the door with your hands", next: "cave_fail" },
             { label: "Go back", next: "start" }
         ]
-    }
+    },
+    cave_fail: {
+        text: "The door doesn't budge, and the cave seems to laugh at you. A loose stone falls and strikes your shoulder.",
+        hp: -1,
+        choices: [
+            { label: "Back away", next: "cave" }
+        ]
+    },
+    vault: {
+        text: "The door swings open. Inside, on a velvet cushion, rests a Moonblade, a sword that hums with pale light.",
+        choices: [
+            { label: "Take the Moonblade", next: "start", give: "Moonblade" }
+        ]
+    },
+    castle: {
+        text: "The castle gates stand open. On a throne of black glass sits the Hollow Queen, her crown made of cold stars. 'Shadowbound,' she smiles. 'I have waited so long for you.'",
+        choices: [
+            { label: "Fight her with the Moonblade", next: "ending_hero", requires: "Moonblade" },
+            { label: "Cast a binding spell (costs 2 mana)", next: "ending_mage", requires: "Whispering Book", manaCost: 2 },
+            { label: "Strike with the Silver Dagger", next: "ending_dagger", requires: "Silver Dagger" },
+            { label: "Kneel befor her", next: "ending-dark" }
+        ]
+    },
+    ending_hero: {
+        text: "The Moonblade blazes. With one swimg, the Hollow Queen's crown shatters and the night shudders. Dawn breaks over the castle for the first time in a hundred years. You are free. THE END.",
+        ending: true,
+        choices: []
+    },
+    ending_mage: {
+        text: "The words from the book pour out of you. Silver chains of light wrap around the Queen. 'Clever,' she whispers, fading. 'But the book will remember you.' The shadows go quiet. THE END.",
+        ending: true,
+        choices: []
+    },
+    ending_dagger: {
+        text: "The silver dagger finds its mark, but the Queen only laughs. 'A dagger from my own chapel?' The dark closes over you. You were never meant to win this way. THE END.",
+        ending: true,
+        choices: []
+    }, 
+    ending_dark: {
+        text: "You kneel. The queen places her crown on your head and the stars go cold. You are Shadowbound, and now you rule the night. THE END.",
+        ending: true,
+        choices: []
+    },
 };
 
 let state = loadGame();
@@ -86,6 +131,14 @@ function goToScene(choice) {
 
     if (choice.give) addItem(choice.give);
     if(choice.mana) state.mana = Math.min(5, state.mana + choice.mana);
+    if (choice.manaCost) {
+        if (state.mana < choice.manaCost) {
+            state.text = "You don't have enough mana to cast that.";
+            update();
+            return;
+        }
+        state.mana -= choice.manaCost;
+    }
 
     const scene = scenes[choice.next];
     state.scene = choice.next;
@@ -103,7 +156,15 @@ function showChoices() {
     if (state.hp <= 0) return;
 
     const scene  = scenes[state.scene] || scenes.start;
+    if (scene.ending) {
+        const again = document.createElement("button");
+        again.textContent = "Play Again";
+        again.addEventListener("click", newGame);
+        box.appendChild(again);
+        return;
+    }
     scene.choices.forEach(function (choice) {
+        if (choice.requires && !state.inventory.includes(choice.requires)) return;
         const btn = document.createElement("button");
         btn.textContent = choice.label;
         btn.addEventListener("click", function () {

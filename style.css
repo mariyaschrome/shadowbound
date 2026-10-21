@@ -205,3 +205,30 @@ h1 {
     border-color: var(--glow);
     box-shadow: 0 0 12px var(--glow);
 }
+
+/* Boss fight */
+.enemy {
+    margin-top: 14px;
+}
+
+.enemy-name {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 3px;
+    color: #ff7a9c;
+    margin-bottom: 6px;
+}
+
+.bar {
+    height: 14px;
+    background: #2a1536;
+    border: 1px solid #7a2f5a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff3f6c, #ff7a9c);
+    box-shadow: 0 0 10px #ff3f6c;
+    transition: width 0.4s ease;
+}

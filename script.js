@@ -9,6 +9,7 @@ const defaultState = {
   inventory: [],
   scene: "start",
   visited: ["Bridge"],
+  fight: null,
   text: START_TEXT
 };
 
@@ -134,11 +135,16 @@ const scenes = {
     place: "Castle",
     text: "The castle gates stand open. On a throne of black glass sits the Hollow Queen, her crown made of cold stars. 'Shadowbound,' she smiles. 'I have waited so long for you.'",
     choices: [
-      { label: "Fight her with the Moonblade", next: "ending_hero", requires: "Moonblade" },
-      { label: "Cast a binding spell (2 mana)", next: "ending_mage", requires: "Whispering Book", manaCost: 2 },
-      { label: "Strike with the Silver Dagger", next: "ending_dagger", requires: "Silver Dagger" },
-      { label: "Kneel before her", next: "ending_dark" }
+      { label: "Face the Hollow Queen in battle", next: "battle_queen" },
+      { label: "Kneel before her", next: "ending_dark" },
+      { label: "Run back to the bridge", next: "start" }
     ]
+  },
+  battle_queen: {
+    place: "Castle",
+    text: "The Queen rises. The stars in her crown scream. 'Then let us dance, little shadow.' The battle begins!",
+    fight: { name: "The Hollow Queen", hp: 24 },
+    choices: []
   },
   ending_hero: {
     place: "Castle",
@@ -221,6 +227,10 @@ const sounds = {
     tone(220, 0.5, "sawtooth", 0.2);
     tone(165, 0.5, "sawtooth", 0.2, 0.4);
     tone(110, 1.0, "sawtooth", 0.2, 0.8);
+  },
+  hit: function () {
+    tone(220, 0.12, "square", 0.2);
+    tone(150, 0.2, "square", 0.2, 0.08);
   }
 };
 
@@ -317,6 +327,7 @@ function goToScene(choice) {
   state.scene = choice.next;
   state.text = scene.text;
   if (scene.hp) state.hp = Math.max(0, state.hp + scene.hp);
+  if (scene.fight) startFight(scene.fight);
 
   if (state.visited.indexOf(scene.place) === -1) {
     state.visited.push(scene.place);
@@ -332,6 +343,10 @@ function showChoices() {
   box.innerHTML = "";
 
   if (state.hp <= 0) return;
+  if (state.fight) {
+    showFightButtons(box);
+    return;
+  }
 
   const scene = scenes[state.scene];
 
@@ -380,6 +395,7 @@ const exploreEvents = [
 ];
 
 function explore() {
+  if (state.fight) { state.text = "You can't do that in the middle of a battle!"; update(); return; }
   if (state.hp <= 0) return;
   playSound("click");
   state.text = pick(exploreEvents)();
@@ -389,6 +405,7 @@ function explore() {
 
 // ---------- Magic ----------
 function castMagic() {
+  if (state.fight) { state.text = "You can't do that in the middle of a battle!"; update(); return; }
   if (state.hp <= 0) return;
 
   if (state.mana <= 0) {
@@ -415,6 +432,142 @@ function castMagic() {
   ];
 
   state.text = pick(spells)();
+  update();
+}
+
+// ---------- Boss fight ----------
+function roll(sides) {
+  return Math.floor(Math.random() * sides) + 1;
+}
+
+function weaponBonus() {
+  if (has("Moonblade")) return 3;
+  if (has("Silver Dagger")) return 1;
+  return 0;
+}
+
+function weaponName() {
+  if (has("Moonblade")) return "Moonblade";
+  if (has("Silver Dagger")) return "Silver Dagger";
+  return "Bare Hands";
+}
+
+function startFight(config) {
+  state.fight = { name: config.name, hp: config.hp, maxHp: config.hp };
+}
+
+function showEnemy() {
+  const box = document.getElementById("enemy");
+  if (!state.fight) {
+    box.innerHTML = "";
+    return;
+  }
+  const pct = Math.round((state.fight.hp / state.fight.maxHp) * 100);
+  box.innerHTML =
+    '<div class="enemy-name">' + state.fight.name + " (" + state.fight.hp + " HP)</div>" +
+    '<div class="bar"><div class="bar-fill" style="width:' + pct + '%"></div></div>';
+}
+
+function showFightButtons(box) {
+  const options = [
+    { label: "Attack (" + weaponName() + ")", action: fightAttack },
+    { label: "Cast Spell (1 mana)", action: fightSpell }
+  ];
+
+  if (has("Shadow Orb")) {
+    options.push({ label: "Use Shadow Orb (+4 HP)", action: fightHeal });
+  }
+  options.push({ label: "Flee", action: fightFlee });
+
+  options.forEach(function (opt) {
+    const btn = document.createElement("button");
+    btn.textContent = opt.label;
+    btn.addEventListener("click", opt.action);
+    box.appendChild(btn);
+  });
+}
+
+function enemyTurn() {
+  const name = state.fight.name;
+  const r = roll(6);
+
+  if (r === 1) {
+    return " 🎲 " + name + " lunges and misses!";
+  }
+
+  let dmg = Math.ceil(r / 2);
+  let note = "";
+  if (has("Midnight Cloak") && dmg > 0) {
+    dmg -= 1;
+    note = " (your cloak absorbs 1)";
+  }
+
+  state.hp = Math.max(0, state.hp - dmg);
+  return " 🎲 " + name + " strikes for " + dmg + " damage" + note + ".";
+}
+
+function finishRound(text) {
+  if (state.fight.hp <= 0) {
+    winFight(text);
+    return;
+  }
+  state.text = text + enemyTurn();
+  checkDeath();
+  update();
+}
+
+function winFight(text) {
+  let winId = "ending_dagger";
+  if (has("Moonblade")) winId = "ending_hero";
+  else if (has("Whispering Book")) winId = "ending_mage";
+
+  state.fight = null;
+  state.scene = winId;
+  state.text = text + " " + scenes[winId].text;
+  playSound("win");
+  update();
+}
+
+function fightAttack() {
+  if (state.hp <= 0 || !state.fight) return;
+  const r = roll(6);
+  const bonus = weaponBonus();
+  const dmg = r + bonus;
+  state.fight.hp = Math.max(0, state.fight.hp - dmg);
+  playSound("hit");
+  finishRound("🎲 You rolled " + r + (bonus ? " +" + bonus : "") + " and hit for " + dmg + " damage.");
+}
+
+function fightSpell() {
+  if (state.hp <= 0 || !state.fight) return;
+
+  if (state.mana <= 0) {
+    state.text = "You reach for your power, but you're out of mana! Choose something else.";
+    update();
+    return;
+  }
+
+  state.mana--;
+  const r = roll(6);
+  const bonus = has("Whispering Book") ? 4 : 1;
+  const dmg = r + bonus;
+  state.fight.hp = Math.max(0, state.fight.hp - dmg);
+  playSound("magic");
+  finishRound("🔮 Your spell rolls " + r + " +" + bonus + " and burns the enemy for " + dmg + " damage.");
+}
+
+function fightHeal() {
+  if (state.hp <= 0 || !state.fight) return;
+  removeItem("Shadow Orb");
+  state.hp = Math.min(10, state.hp + 4);
+  playSound("magic");
+  finishRound("The Shadow Orb dissolves into your skin. You heal 4 HP.");
+}
+
+function fightFlee() {
+  state.fight = null;
+  state.scene = "start";
+  state.text = "You run, and the Queen's laughter follows you across the bridge. " + START_TEXT;
   update();
 }
 
@@ -479,7 +632,8 @@ function update() {
       inventoryList.appendChild(li);
     });
   }
-
+  
+  showEnemy();
   showChoices();
   showMap();
   saveGame();

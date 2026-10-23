@@ -232,3 +232,93 @@ h1 {
     box-shadow: 0 0 10px #ff3f6c;
     transition: width 0.4s ease;
 }
+
+/* Title screen */
+.hidden {
+    display: none !important;
+}
+
+.title-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.title-screen h1 {
+    font-size: clamp(2.2rem, 10vw, 4rem);
+}
+
+.tagline {
+    color: var(--muted);
+    font-style: italic;
+    margin: 0 0 40px;
+    animation: fadeIn 2s ease;
+}
+
+.title-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: min(280px, 80vw);
+}
+
+.title-buttons button {
+    flex: none;
+    width: 100%;
+}
+
+/* Mobile Polish */
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+button {
+    min-height: 48px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 520px) {
+    body {
+        font-size: 1.05rem;
+        padding: 16px 12px calc(24px + enc(safe-area-inset-bottom));
+    }
+
+    .game h1 {
+        font-size: 1.8rem;
+        letter-spacing: 3px;
+        margin-top: 44px;
+    } 
+
+    .panel {
+        padding: 16px;
+    }
+
+    /* Story choices: big full-width buttons, easy to tap */
+    #choices button {
+        flex: 1 1 100%;
+    }
+
+    /* Explore / Magic / New Game / Menu: neat 2x2 grid */
+    .utility button {
+        flex: 1 1 45%;
+        min-width: 0;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        padding: 12px 6px;
+    }
+
+    #btn-sound {
+        padding: 6px 10px;
+        min-height: 40px;
+    }
+}

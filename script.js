@@ -658,6 +658,53 @@ document.getElementById("btn-explore").addEventListener("click", explore);
 document.getElementById("btn-magic").addEventListener("click", castMagic);
 document.getElementById("btn-reset").addEventListener("click", newGame);
 
+// ---------- Menu Button ----------
+document.getElementById("btn-menu").addEventListener("click", function () {
+  playSound("click");
+  showTitle();
+});
+
+// ---------- Title screen ----------
+const titleScreen = document.getElementById("title-screen");
+const continueBtn = document.getElementById("btn-continue");
+
+function canContinue() {
+  if (!localStorage.getItem(SAVE_KEY)) return false;
+  if (state.hp <= 0) return false;
+  if (scenes[state.scene].ending) return false;
+  return true;
+}
+
+function showTitle() {
+  titleScreen.classList.remove("hidden");
+  gameBox.classList.add("hidden");
+  continueBtn.classList.toggle("hidden", !canContinue());
+}
+
+function enterGame() {
+  titleScreen.classList.add("hidden");
+  gameBox.classList.remove("hidden");
+  shownHp = state.hp;
+  shownItems = state.inventory.length;
+  update();
+}
+
+continueBtn.addEventListener("click", function () {
+  playSound("click");
+  enterGame();
+});
+
+document.getElementById("btn-start").addEventListener("click", function () {
+  if (canContinue()) {
+    const sure = confirm("Start over? Your saved progress will be lost.");
+    if (!sure) return;
+  }
+  playSound("click");
+  state = copyDefault();
+  enterGame();
+});
+
 // ---------- Start ----------
 updateSoundButton();
-update();
+showTitle();
+
